@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELIVRA - Secure Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+
+    <div class="login-card">
+        <!-- Logo & Header -->
+        <div class="brand-header">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <path d="m9 12 2 2 4-4"/>
+                </svg>
+            </div>
+            <h1 class="brand-title">ELIVRA</h1>
+            <p class="brand-subtitle">Voter Registration & Integrity System</p>
+        </div>
+
+        <!-- Authentication Status Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">
+                  <span class="alert-icon"></span>
+                  <span>{{ message }}</span>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Login Form -->
+        <form action="/login" method="POST" id="loginForm">
+            <!-- Username/Email Field -->
+            <div class="form-group">
+                <label for="identifier">Username or Email</label>
+                <div class="input-wrapper">
+                    <input type="text" id="identifier" name="identifier" autocomplete="username" placeholder="credentials or ...@f" required>
+                </div>
+            </div>
+
+            <!-- Password Field with Show/Hide -->
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="password" name="password" autocomplete="current-password" placeholder="" required>
+                    <button type="button" id="togglePassword" class="password-toggle" title="Toggle Password Visibility">
+                        
+                    </button>
+                </div>
+            </div>
+
+            <!-- Options Row: Remember Me & Forgot Password -->
+            <div class="form-options">
+                <label class="remember-me">
+                    <input type="checkbox" name="remember" id="remember">
+                    <span>Remember me</span>
+                </label>
+                <a href="#" class="forgot-link" onclick="alert('Please contact your administrator to reset credentials.')">Forgot password?</a>
+            </div>
+
+            <!-- Sign-In Button -->
+            <button type="submit" id="submitBtn" class="btn-primary">
+                <span class="btn-text">Sign In</span>
+                <span class="btn-loader" style="display: none;">
+                    <span class="spinner"></span> Signing in...
+                </span>
+            </button>
+        </form>
+
+        <!-- Security Notice -->
+        <div class="security-notice">
+            <span class="lock-icon"></span>
+            <p><strong>Restricted Access:</strong> Unlawful access or unauthorized attempt is prohibited and subject to system monitoring and logging.</p>
+        </div>
+    </div>
+
+    <!-- Client-Side Interactivity Script -->
+    <script>
+        // --- 1. Password Visibility Toggle ---
+        const toggleBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        if (toggleBtn && passwordInput) {
+            toggleBtn.addEventListener('click', () => {
+                const isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                toggleBtn.textContent = isPassword ? '🙈' : '👁️';
+            });
+        }
+
+        // --- 2. Loading Animation on Form Submit ---
+        const form = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = submitBtn ? submitBtn.querySelector('.btn-text') : null;
+        const btnLoader = submitBtn ? submitBtn.querySelector('.btn-loader') : null;
+
+        if (form && submitBtn) {
+            form.addEventListener('submit', () => {
+                submitBtn.disabled = true;
+                if (btnText) btnText.style.display = 'none';
+                if (btnLoader) btnLoader.style.display = 'inline-flex';
+            });
+        }
+    </script>
+</body>
+</html>

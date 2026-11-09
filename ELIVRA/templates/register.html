@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="registration-wrapper">
+    <!-- Ambient Glow Effect behind the card -->
+    <div class="ambient-glow"></div>
+
+    <!-- Floating 3D Card Container -->
+    <div class="register-card-3d">
+        <div class="card-header-amoled">
+            <h2>Voter Ingestion Form</h2>
+            <p>Secure Biometric & Integrity Processing</p>
+        </div>
+
+        <form action="{{ url_for('register') }}" method="POST" class="amoled-form">
+            <div class="form-group">
+                <label for="national_id"> National ID / Passport No.</label>
+                <input type="text" id="national_id" name="national_id" placeholder="e.g., 345***" required autocomplete="off">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" placeholder="e.g., Manunda" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" placeholder="e.g., Otieno" required autocomplete="off">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dob">Date of Birth</label>
+                    <input type="date" id="dob" name="dob" required>
+                </div>
+                <div class="form-group">
+                    <label for="address">Sub-County / Ward / Polling Station</label>
+                    <input type="text" id="address" name="address" placeholder="e.g., Kisumu Central, Market Milimani" required autocomplete="off">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-amoled-submit">
+                <span>Run Integrity Check & Register</span>
+                <div class="btn-glow"></div>
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
