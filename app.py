@@ -13,16 +13,11 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
 
 # --- PostgreSQL / Environment Variable Connection Logic ---
-database_url = os.getenv('DATABASE_URL')
+database_url = os.getenv('DATABASE_URL', 'sqlite:///elivra.db')
+if database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
 
-if database_url:
-    # Ensure SQLAlchemy explicitly uses the psycopg2 driver to match requirements.txt
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql+psycopg2://", 1)
-    elif database_url.startswith("postgresql://") and not database_url.startswith("postgresql+psycopg2://"):
-        database_url = database_url.replace("postgresql://", "postgresql+psycopg2://", 1)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///elivra.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 from models import db, User, Voter, Anomaly, AuditLog
