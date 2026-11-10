@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELIVRA - Voter Integrity & Security Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="dashboard-body">
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-brand">
+            <svg class="nav-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="m9 12 2 2 4-4"/>
+            </svg>
+            <span class="brand-name">ELIVRA.co</span>
+            <span class="system-badge"> v.2.9</span>
+        </div>
+        <div class="user-profile">
+            <span class="status-indicator online"></span>
+            <span class="user-name">User: <strong>{{ username }}</strong></span>
+            <a href="/logout" class="btn-logout">Logout </a>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- Key Metrics Row (Updated with 3D Modal Click Triggers) -->
+        <section class="metrics-grid">
+            <div class="metric-card" onclick="openStatModal('totalVoters')" style="cursor: pointer;">
+                <div class="metric-icon blue">👥</div>
+                <div class="metric-info">
+                    <h3>Total Voters</h3>
+                    <p id="stat-total-voters" class="metric-value">0</p>
+                </div>
+            </div>
+            <div class="metric-card" onclick="openStatModal('verifiedVoters')" style="cursor: pointer;">
+                <div class="metric-icon green">✅</div>
+                <div class="metric-info">
+                    <h3>Verified Voters</h3>
+                    <p id="stat-verified-voters" class="metric-value">0</p>
+                </div>
+            </div>
+            <div class="metric-card" onclick="openStatModal('openAnomalies')" style="cursor: pointer;">
+                <div class="metric-icon orange">⚠️</div>
+                <div class="metric-info">
+                    <h3>Open Anomalies</h3>
+                    <p id="stat-open-anomalies" class="metric-value">0</p>
+                </div>
+            </div>
+            <div class="metric-card" onclick="openStatModal('integrityAlerts')" style="cursor: pointer;">
+                <div class="metric-icon red">🛡️</div>
+                <div class="metric-info">
+                    <h3>Integrity Alerts</h3>
+                    <p id="stat-integrity-alerts" class="metric-value">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content Area: Split View -->
+        <div class="main-content-grid">
+            
+            <!-- Left Column: Voter Registration & Data Integrity Table -->
+            <div class="content-column">
+                
+                <!-- Quick Register Form -->
+                <div class="card-panel">
+                    <div class="panel-header">
+                        <h2>Register New Voter</h2>
+                        <span class="panel-tag">Real-time Check</span>
+                    </div>
+                    <form id="registerVoterForm" class="form-grid">
+                        <div class="form-field">
+                            <label>Registration ID</label>
+                            <input type="text" id="regId" placeholder="e.g. REG-10928" required>
+                        </div>
+                        <div class="form-field">
+                            <label>Full Name</label>
+                            <input type="text" id="fullName" placeholder="John Doe" required>
+                        </div>
+                        <div class="form-field">
+                            <label>National ID / Passport</label>
+                            <input type="text" id="nationalId" placeholder="e.g. 38291029" required>
+                        </div>
+                        <div class="form-field">
+                            <label>Date of Birth</label>
+                            <input type="date" id="dob" required>
+                        </div>
+                        <div class="form-field">
+                            <label>County</label>
+                            <input type="text" id="county" placeholder="Nairobi" required>
+                        </div>
+                        <div class="form-field">
+                            <label>Constituency</label>
+                            <input type="text" id="constituency" placeholder="Westlands" required>
+                        </div>
+                        <div class="form-field full-width">
+                            <label>Ward</label>
+                            <input type="text" id="ward" placeholder="Parklands" required>
+                        </div>
+                        <div class="form-field full-width">
+                            <button type="submit" class="btn-primary-action">
+                                Register Voter & Verify Hash
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Voter Integrity Table -->
+                <div class="card-panel">
+                    <div class="panel-header">
+                        <h2>Flagged Registration Anomalies</h2>
+                        <button class="btn-secondary" onclick="loadVoters()">Refresh</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Reg ID</th>
+                                    <th>Full Name</th>
+                                    <th>National ID</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Hash Verification</th>
+                                </tr>
+                            </thead>
+                            <tbody id="voterTableBody">
+                                <tr><td colspan="6" class="text-center">Loading records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: System Audit Log Stream -->
+            <div class="content-column side-column">
+                <div class="card-panel full-height">
+                    <div class="panel-header">
+                        <h2>System Audit Stream</h2>
+                        <span class="live-dot">LIVE</span>
+                    </div>
+                    <p class="panel-desc">Cryptographic event log monitoring unauthorized data mutations and access attempts.</p>
+                    
+                    <div id="auditLogStream" class="log-stream">
+                        <div class="log-entry">
+                            <span class="log-time">--:--:--</span>
+                            <span class="log-text">Initializing audit stream...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 3D POPUP MODAL WITH AMBIENT LIGHTING -->
+    <div id="statModalOverlay" class="modal-overlay" onclick="closeStatModal(event)">
+        <div id="statModal3D" class="modal-3d">
+            <!-- Close Button -->
+            <button class="modal-close-btn" onclick="closeStatModal(true)">&times;</button>
+            
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <div id="modalIconContainer" class="modal-icon-box"></div>
+                <div>
+                    <h3 id="modalTitle">Details</h3>
+                    <span id="modalSubtitle" class="modal-subtitle">Filtered Registry Records</span>
+                </div>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="modal-body">
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr id="modalTableHead">
+                                <!-- Dynamically Populated via JS -->
+                            </tr>
+                        </thead>
+                        <tbody id="modalTableBody">
+                            <!-- Dynamically Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
