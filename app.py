@@ -23,7 +23,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 from models import db, User, Voter, Anomaly, AuditLog
 from anomaly_engine import run_anomaly_checks
 
-db.init_app(app)
+
+try:
+    db.init_app(app)
+except Exception as e:
+    print(f"⚠️ DATABASE INITIALIZATION FAILED: {e}")
+    print("The app is starting, but database features will not work until this is fixed.")
 
 # Authentication Setup
 login_manager = LoginManager()
@@ -375,8 +380,8 @@ def api_update_anomaly(anomaly_id):
 
     return jsonify({"message": "Anomaly updated successfully"})
 
-# Application Entry Point
-if __name__ == '__main__':
+# --- STEP 2: APPLICATION ENTRY POINT ---
+if __name__ == '__main__' and os.getenv('VERCEL') is None:
     with app.app_context():
         db.create_all()
         
