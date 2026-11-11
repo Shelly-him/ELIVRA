@@ -14,8 +14,11 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
 
 # --- PostgreSQL / Environment Variable Connection Logic ---
 database_url = os.getenv('DATABASE_URL', 'sqlite:///elivra.db')
-if database_url and database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+if database_url:
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif database_url.startswith("postgresql://") and not database_url.startswith("postgresql+psycopg2://"):
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -23,9 +26,27 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 from models import db, User, Voter, Anomaly, AuditLog
 from anomaly_engine import run_anomaly_checks
 
-
 try:
     db.init_app(app)
+    # Automatically create database tables on startup (works on Vercel cold starts)
+    with app.app_context():
+        db.create_all()
+        
+        # Seed default administrator if not present
+        admin_user = User.query.filter_by(username='admin').first()
+        if not admin_user:
+            hashed_pw = generate_password_hash('AdminPass123!', method='pbkdf2:sha256')
+            default_admin = User(
+                username='admin',
+                email='admin@elivra.org',
+                password_hash=hashed_pw,
+                role='Administrator',
+                status='Active'
+            )
+            db.session.add(default_admin)
+            db.session.commit()
+            print("[ELIVRA] Fresh setup initialized. Default admin: admin / AdminPass123!")
+            
 except Exception as e:
     print(f"⚠️ DATABASE INITIALIZATION FAILED: {e}")
     print("The app is starting, but database features will not work until this is fixed.")
@@ -176,11 +197,24 @@ def login():
                 flash('Your account has been deactivated.', 'danger')
                 return render_template('login.html')
 
-            user.last_login = datetime.utcnow()
-            db.session.commit()
+            # Resilient last_login update with try-except to prevent 500 crashes
+            try:
+                if hasattr(user, 'last_login'):
+                    user.last_login = datetime.utcnow()
+                    db.session.commit()
+            except Exception as db_err:
+                db.session.rollback()
+                print(f"Non-critical DB warning on login: {db_err}")
+
             login_user(user)
 
-            log_action("Admin Login", "User", user.id, f"User {user.username} logged in successfully.")
+            # Resilient audit logging with try-except
+            try:
+                log_action("Admin Login", "User", user.id, f"User {user.username} logged in successfully.")
+            except Exception as log_err:
+                db.session.rollback()
+                print(f"Non-critical audit log warning: {log_err}")
+
             return redirect(url_for('dashboard'))
         else:
             flash('Invalid username/email or password.', 'danger')
@@ -380,24 +414,6 @@ def api_update_anomaly(anomaly_id):
 
     return jsonify({"message": "Anomaly updated successfully"})
 
-# --- STEP 2: APPLICATION ENTRY POINT ---
-if __name__ == '__main__' and os.getenv('VERCEL') is None:
-    with app.app_context():
-        db.create_all()
-        
-        # Seed default administrator
-        admin_user = User.query.filter_by(username='admin').first()
-        if not admin_user:
-            hashed_pw = generate_password_hash('AdminPass123!', method='pbkdf2:sha256')
-            default_admin = User(
-                username='admin',
-                email='admin@elivra.org',
-                password_hash=hashed_pw,
-                role='Administrator',
-                status='Active'
-            )
-            db.session.add(default_admin)
-            db.session.commit()
-            print("[ELIVRA] Fresh setup initialized. Default admin: admin / AdminPass123!")
-
+# --- APPLICATION ENTRY POINT ---
+if __name__ == '__main__':
     app.run(debug=True)
